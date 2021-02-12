@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
 const Schema = mongoose.Schema;
+const jwt = require("jsonwebtoken");
 const Joi = require("joi");
 const mentorSchema = new Schema(
    {
@@ -62,7 +62,7 @@ exports.MentorModel = mongoose.model("Mentor", mentorSchema);
 exports.validateMentorSchema = (mentor) => {
    const schema = Joi.object({
       name: Joi.string().trim().min(3).required(),
-      email: Joi.string().lowercase().trim().email().required().message,
+      email: Joi.string().lowercase().trim().email().required(),
       mobileNumber: Joi.string()
          .regex(/^[0-9]{10}$/)
          .messages({
