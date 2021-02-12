@@ -1,7 +1,11 @@
 const { OAuth2Client } = require("google-auth-library");
 const { Student } = require("../models/student");
+const { MentorModel: Mentor } = require("../models/mentor");
 const { customHttpError } = require("../helpers/customError");
-const { validateLogin, validateSignup } = require("../helpers/auth_validator");
+const {
+   validateMentorLogin,
+   validateSignup,
+} = require("../helpers/auth_validator");
 const { hashPasword, comparePasword } = require("../helpers/hash_password");
 
 exports.authController = {
@@ -49,17 +53,17 @@ exports.authController = {
       }
    },
 
-   //login
-   async login(req, res, next) {
-      const { error } = validateLogin(req.body);
+   //Mentorlogin
+   async mentorLogin(req, res, next) {
+      const { error } = validateMentorLogin(req.body);
       if (error)
          return customHttpError(res, next, 400, error.details[0].message);
 
       const { email, password } = req.body;
 
       try {
-         let student = await Student.findOne({ email });
-         if (!student) {
+         let mentor = await Mentor.findOne({ email });
+         if (!mentor) {
             return customHttpError(
                res,
                next,
@@ -68,7 +72,7 @@ exports.authController = {
             );
          }
 
-         const isMatch = await comparePasword(password, student.password);
+         const isMatch = await comparePasword(password, mentor.password);
          if (!isMatch) {
             return customHttpError(
                res,
@@ -77,22 +81,21 @@ exports.authController = {
                "Incorrect email or password"
             );
          }
-         const token = student.genarateAuthToken();
+         const token = mentor.genarateAuthToken();
          return res.status(200).send({ token });
       } catch (error) {
          res.status(500);
          return next(error);
       }
    },
+
    //google login
 
    async googleLogin(req, res, next) {
-      // console.log(req.headers);
       const bearerHeader = req.headers["authorization"];
       if (bearerHeader) {
          const bearer = bearerHeader.split(" ");
          const bearerToken = bearer[1];
-         // console.log(bearerToken);
          const googleClient = new OAuth2Client(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRETE
@@ -129,12 +132,10 @@ exports.authController = {
                         .send({});
                   } else {
                      const token = student.genarateAuthToken();
-                     return res
-                        .status(200)
-                        .send({
-                           token,
-                           detailsSubmitted: student.detailsSubmitted,
-                        });
+                     return res.status(200).send({
+                        token,
+                        detailsSubmitted: student.detailsSubmitted,
+                     });
                   }
                } catch (error) {
                   next(error);
@@ -147,14 +148,10 @@ exports.authController = {
                   "Please verify your google account"
                );
             }
-            // console.log(googleUserId, email, email_verified, picture, name);
          } catch (error) {
             return customHttpError(res, next, 403, "Something Went wrong");
          }
-
-         //next();
       } else {
-         // Forbidden
          return customHttpError(res, next, 403, "Invalid Token Details");
       }
    },

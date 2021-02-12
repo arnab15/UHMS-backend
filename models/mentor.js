@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const Schema = mongoose.Schema;
 const Joi = require("joi");
 const mentorSchema = new Schema(
@@ -18,6 +19,12 @@ const mentorSchema = new Schema(
          type: String,
          required: true,
       },
+      role: {
+         type: String,
+         default: "mentor",
+         enum: ["mentor", "admin"],
+         lowercase: true,
+      },
       mobileNumber: {
          type: String,
          length: 10,
@@ -36,6 +43,20 @@ const mentorSchema = new Schema(
       timestamps: true,
    }
 );
+
+mentorSchema.methods.genarateAuthToken = function () {
+   const token = jwt.sign(
+      {
+         _id: this._id,
+         name: this.name,
+         role: this.role,
+      },
+      process.env.MENTORS_JWT_SECREAT,
+      { expiresIn: "7 days" }
+   );
+   return token;
+};
+
 exports.MentorModel = mongoose.model("Mentor", mentorSchema);
 
 exports.validateMentorSchema = (mentor) => {

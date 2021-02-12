@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const {
-   createMentor,
-   addStudentToMentor,
-   getAllAssignedStudentForMentor,
-   removeStudentFromMentor,
    allMentors,
+   getAllMentors,
+   addNewMentor,
 } = require("../controllers/mentorController");
-router.post("/mentor", createMentor);
+const { isAdmin } = require("../middlewares/admin");
+
+router.post("/mentor", isAdmin, addNewMentor);
 router.get("/mentors", allMentors);
+router.get("/allmentors", isAdmin, getAllMentors);
+
 module.exports = router;

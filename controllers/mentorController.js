@@ -1,28 +1,50 @@
+const { customHttpError } = require("../helpers/customError");
+const { hashPasword } = require("../helpers/hash_password");
+const { validateMentor } = require("../helpers/mentor_validator");
 const { MentorModel: Mentor } = require("../models/mentor");
 
 exports.allMentors = async (req, res, next) => {
    try {
-      const mentors = await Mentor.find({}).select("name");
+      const mentors = await Mentor.find({}).select("name role");
       res.send({ mentors });
       //console.log(mentors);
    } catch (error) {
-      next(error.message);
+      return next(error.message);
    }
 };
 
-exports.createMentor = async (req, res, next) => {
+exports.getAllMentors = async (req, res, next) => {
+   try {
+      const mentors = await Mentor.find({})
+         .select("-password")
+         .sort({ createdAt: -1 });
+      res.send({
+         mentors,
+      });
+      //console.log(mentors);
+   } catch (error) {
+      return next(error);
+   }
+};
+
+exports.addNewMentor = async (req, res, next) => {
+   const { error } = validateMentor(req.body);
+   if (error) return customHttpError(res, next, 400, error.details[0].message);
+   const { name, email, password, mobileNumber } = req.body;
+   // console.log(req.body);
+   const hashedPassword = await hashPasword(password);
+
    const mentor = new Mentor({
-      name: "Sayak Pramanik",
-      email: "sayak@gmail.com",
-      mobileNumber: "9589586389",
-      password: "123456",
+      name,
+      email,
+      mobileNumber,
+      password: hashedPassword,
    });
    try {
-      const m = await mentor.save();
-      console.log(m);
-      res.send({ mentor: m });
+      await mentor.save();
+      res.send({ message: "Mentor Added Successfully" });
    } catch (error) {
-      console.log(error.message);
+      return next(error);
    }
 };
 

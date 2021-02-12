@@ -94,6 +94,7 @@ StudentSchema.methods.genarateAuthToken = function () {
    );
    return token;
 };
+
 const Student = mongoose.model("Student", StudentSchema);
 
 exports.Student = Student;
