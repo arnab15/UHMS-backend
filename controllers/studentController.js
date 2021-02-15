@@ -1,9 +1,13 @@
+const mongoose = require("mongoose");
 const { Student } = require("../models/student");
+const { MentorModel: Mentor, MentorModel } = require("../models/mentor");
 const { validateStudent } = require("../helpers/student_validator");
 const { customHttpError } = require("../helpers/customError");
 const { validateObjectId } = require("../helpers/validate_object_id");
 const { validateHealthRecord } = require("../helpers/health_record_validator");
 const { HealthReportModel } = require("../models/helthReport");
+const Fawn = require("fawn");
+Fawn.init(mongoose);
 
 exports.addStudent = async (req, res, next) => {
    const { error } = validateStudent(req.body);
@@ -23,6 +27,14 @@ exports.addStudent = async (req, res, next) => {
    try {
       const student = await Student.findById({ _id: studentId }).select("-gid");
       if (!student) return customHttpError(res, next, 400, "Student not found");
+      const mentor = await MentorModel.findById({ _id: assignedMentor });
+      if (!mentor)
+         return customHttpError(
+            res,
+            next,
+            400,
+            "Invslid Mentor or mentor not found"
+         );
 
       student.name = name;
       student.parentsContactNumber = parentsContactNumber;
@@ -34,6 +46,9 @@ exports.addStudent = async (req, res, next) => {
       student.gender = gender;
       student.detailsSubmitted = true;
 
+      mentor.assignedStudents.push(student._id);
+
+      await mentor.save();
       const updatedStudent = await student.save();
       res.send({ updatedStudent });
    } catch (error) {
@@ -87,6 +102,7 @@ exports.addHealthRecord = async (req, res, next) => {
          dayNumber,
          recordedAt,
       });
+
       student.healthRecord.push(healthrecord);
       const updatedstudent = await student.save();
       res.send({ updatedstudent });

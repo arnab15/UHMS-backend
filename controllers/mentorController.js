@@ -1,6 +1,7 @@
 const { customHttpError } = require("../helpers/customError");
 const { hashPasword } = require("../helpers/hash_password");
 const { validateMentor } = require("../helpers/mentor_validator");
+const { validateObjectId } = require("../helpers/validate_object_id");
 const { MentorModel: Mentor } = require("../models/mentor");
 
 exports.allMentors = async (req, res, next) => {
@@ -70,12 +71,23 @@ exports.addStudentToMentor = async (req, res, next) => {
 };
 
 exports.getAllAssignedStudentForMentor = async (req, res, next) => {
-   const mentorId = "601f9ad06c9ef4204829ffcd";
+   const { error } = validateObjectId(req.params);
+   if (error) return customHttpError(res, next, 400, "Invalid Id");
+   const mentorId = req.params.id;
    try {
-      const students = await Mentor.findById({ _id: mentorId })
-         .populate("assignedStudents", ["name", "email"])
+      const student = await Mentor.findById({ _id: mentorId })
+         .populate("assignedStudents", [
+            "name",
+            "email",
+            "mobileNumber",
+            "parentsContactNumber",
+            "hostelName",
+            "hostelRoomNo",
+            "healthRecord",
+         ])
          .select("assignedStudents");
-      console.log(students);
+      if (!student) return customHttpError(res, next, 404, "No student found");
+      res.send({ student });
    } catch (error) {
       console.log(error);
    }
