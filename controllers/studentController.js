@@ -93,7 +93,7 @@ exports.addHealthRecord = async (req, res, next) => {
          400,
          healthrecordEroor.details[0].message
       );
-   console.log(req.body);
+   // console.log(req.body);
    const { symptoms, dayNumber, recordedAt } = req.body;
 
    try {
